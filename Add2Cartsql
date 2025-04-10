@@ -1,0 +1,216 @@
+CREATE TABLE Customers (
+    CustomerID INT PRIMARY KEY,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    PhoneNumber VARCHAR(20) UNIQUE NOT NULL,
+    EmailAddress VARCHAR(100) UNIQUE NOT NULL,
+    AccountNumber VARCHAR(50) UNIQUE NOT NULL,
+    PasswordHash VARCHAR(255) NOT NULL,
+    ConsumedCoupons CLOB,
+    Gender VARCHAR(10) CHECK(Gender IN ('Male','Female')),
+    DateOfBirth DATE,
+    AccountBirthDate DATE NOT NULL
+);
+
+CREATE TABLE CustomerAddress (
+    AddressID INT PRIMARY KEY,
+    CustomerID INT,
+    HouseNumber VARCHAR(30),
+    StreetNumber VARCHAR(30),
+    BlockNumber VARCHAR(30),
+    City VARCHAR(50),
+    Postcode VARCHAR(20),
+    MapCoordinates VARCHAR(100),
+    LandmarkDetails CLOB,
+    AddressType VARCHAR(20) CHECK (AddressType IN ('Home','Work','Home 2','Home 3')),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+);
+
+CREATE TABLE Customer_Allergens (
+    CustomerID INT PRIMARY KEY,
+    Milk INT CHECK (Milk <= 1),
+    Eggs INT CHECK (Eggs <= 1),
+    Peanuts INT CHECK (Peanuts <= 1),
+    Tree_Nuts INT CHECK (Tree_Nuts <= 1),
+    Fish INT CHECK (Fish <= 1),
+    Shellfish INT CHECK (Shellfish <= 1),
+    Wheat INT CHECK (Wheat <= 1),
+    Soy INT CHECK (Soy <= 1),
+    Sesame INT CHECK (Sesame <= 1),
+    Fruits INT CHECK (Fruits <= 1),
+    Vegetables INT CHECK (Vegetables <= 1),
+    Mammalian_Meat INT CHECK (Mammalian_Meat <= 1),
+    Tropical_Produce INT CHECK (Tropical_Produce <= 1),
+    Buckwheat INT CHECK (Buckwheat <= 1),
+    Chickpeas INT CHECK (Chickpeas <= 1),
+    Gluten INT DEFAULT 0 CHECK (Gluten <= 1),
+    FodMaps INT DEFAULT 0 CHECK (FodMaps <= 1),
+    Lactose_Intolerance INT DEFAULT 0 CHECK (Lactose_Intolerance <= 1),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+);
+
+CREATE TABLE Categories (
+    CategoryID INT PRIMARY KEY,
+    CategoryName VARCHAR(100) UNIQUE NOT NULL,
+    CategoryImage VARCHAR(255)
+);
+
+CREATE TABLE Products (
+    ProductID INT PRIMARY KEY,
+    ParentProductID INT,
+    CategoryID INT,
+    ProductName VARCHAR(100) NOT NULL,
+    ProductDescription CLOB,
+    ProductImages CLOB,
+    ProductWeight NUMBER(10,2),
+    ProductShelfLife INT,
+    StockInDate DATE,
+    CalorieCount INT,
+    ProteinCount NUMBER(5,2),
+    CholesterolCount NUMBER(5,2),
+    TotalFatCount NUMBER(5,2),
+    TotalCarbsCount NUMBER(5,2),
+    ProductTitle VARCHAR(100),
+    NutritionalLabel CLOB,
+    ProductVariants CLOB,
+    IngredientsList CLOB,
+    ProductPrice NUMBER(6,2) NOT NULL,
+    ProductDiscount NUMBER(6,2) DEFAULT 0,
+    FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID) ON DELETE SET NULL,
+    FOREIGN KEY (ParentProductID) REFERENCES Products(ProductID)
+);
+
+CREATE TABLE Product_allergens (
+    ProductID INT PRIMARY KEY,
+    Milk INT DEFAULT 0 CHECK (Milk <= 1),
+    Eggs INT DEFAULT 0 CHECK (Eggs <= 1),
+    Peanuts INT DEFAULT 0 CHECK (Peanuts <= 1),
+    Tree_Nuts INT DEFAULT 0 CHECK (Tree_Nuts <= 1),
+    Fish INT DEFAULT 0 CHECK (Fish <= 1),
+    Shellfish INT DEFAULT 0 CHECK (Shellfish <= 1),
+    Wheat INT DEFAULT 0 CHECK (Wheat <= 1),
+    Soy INT DEFAULT 0 CHECK (Soy <= 1),
+    Sesame INT DEFAULT 0 CHECK (Sesame <= 1),
+    Fruits INT DEFAULT 0 CHECK (Fruits <= 1),
+    Vegetables INT DEFAULT 0 CHECK (Vegetables <= 1),
+    Mammalian_Meat INT DEFAULT 0 CHECK (Mammalian_Meat <= 1),
+    Tropical_Produce INT DEFAULT 0 CHECK (Tropical_Produce <= 1),
+    Buckwheat INT DEFAULT 0 CHECK (Buckwheat <= 1),
+    Chickpeas INT DEFAULT 0 CHECK (Chickpeas <= 1),
+    Gluten INT DEFAULT 0 CHECK (Gluten <= 1),
+    FodMaps INT DEFAULT 0 CHECK (FodMaps <= 1),
+    Lactose_Intolerance INT DEFAULT 0 CHECK (Lactose_Intolerance <= 1),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE ProductStock (
+    StockID INT PRIMARY KEY,
+    ProductID INT UNIQUE,
+    StockQuantity INT NOT NULL,
+    StockInDate DATE,
+    MinimumLevel INT,
+    ReorderDate DATE,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE Cart (
+    CartID INT PRIMARY KEY,
+    CustomerID INT,
+    CartTimer TIMESTAMP,
+    TotalCartValue NUMBER(10,2),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+);
+
+CREATE TABLE CartItems (
+    CartItemID INT PRIMARY KEY,
+    CartID INT,
+    ProductID INT,
+    Quantity INT NOT NULL,
+    FOREIGN KEY (CartID) REFERENCES Cart(CartID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    CustomerID INT,
+    OrderDate DATE NOT NULL,
+    DeliveryDate DATE,
+    OrderTrackingCode VARCHAR2(50),
+    PaymentMethod VARCHAR2(50) NOT NULL,
+    ShippingFee NUMBER(10,2) DEFAULT 0,
+    OrderStatus VARCHAR2(50) NOT NULL CHECK (OrderStatus IN ('Pending', 'Confirmed', 'Packaged', 'On its way', 'Delivered')),
+    DeliveredDate DATE,
+    DeliveryType VARCHAR2(20) CHECK (DeliveryType IN ('Express', 'Standard')),
+    TotalPrice NUMBER(10,2) NOT NULL,
+    Discount NUMBER(10,2) DEFAULT 0 NOT NULL,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+);
+
+CREATE TABLE OrderItems (
+    OrderItemID INT PRIMARY KEY,
+    OrderID INT,
+    ProductID INT,
+    Quantity INT NOT NULL,
+    ProductPrice NUMBER(10,2) NOT NULL,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE RecursiveOrders (
+    RecursiveOrderID INT PRIMARY KEY,
+    CustomerID INT,
+    PreferredDeliveryDate INT CHECK (PreferredDeliveryDate BETWEEN 1 AND 31) NOT NULL,
+    Status VARCHAR(20) DEFAULT 'Active' CHECK(Status IN ('Active','Dropped')),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE
+);
+
+CREATE TABLE RecursiveOrderItems (
+    RecursiveOrderItemID INT PRIMARY KEY,
+    RecursiveOrderID INT,
+    ProductID INT,
+    Quantity INT NOT NULL,
+    FOREIGN KEY (RecursiveOrderID) REFERENCES RecursiveOrders(RecursiveOrderID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE Reviews (
+    ReviewID INT PRIMARY KEY,
+    CustomerID INT,
+    ProductID INT,
+    ReviewTitle VARCHAR(100),
+    ReviewText CLOB,
+    Stars INT CHECK (Stars BETWEEN 1 AND 5),
+    ReviewDate DATE NOT NULL,
+    ProductReviewImage CLOB,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE,
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE Payments (
+    PaymentID INT PRIMARY KEY,
+    CustomerID INT,
+    OrderID INT,
+    PaymentType VARCHAR(20) NOT NULL CHECK (PaymentType IN ('Cash','Card')),
+    PaymentStatus VARCHAR(30) CHECK(PaymentStatus IN ('Pending','Processing','Authenticating','Complete','Declined')),
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) ON DELETE CASCADE,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE Delivery (
+    DeliveryID INT PRIMARY KEY,
+    OrderID INT,
+    OrderState VARCHAR(12) CHECK (OrderState IN ('Pending','Confirmed','Packaged','On its way','Delivered')),
+    TrackingID VARCHAR(50) UNIQUE,
+    EstimatedRemainingTime INT,
+    DeliveryNotes CLOB,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID) ON DELETE CASCADE
+);
+
+
+CREATE TABLE Webpage (
+    WebpageID INT PRIMARY KEY,
+    Banners CLOB,
+    BannerTimer INT
+);
